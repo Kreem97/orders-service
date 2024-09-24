@@ -1,13 +1,27 @@
 package com.kareemhunte.assessment.ordersservice.service;
 
 import com.kareemhunte.assessment.ordersservice.model.Order;
+import com.kareemhunte.assessment.ordersservice.repository.OrderRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.*;
 
 class OrderServiceTest {
 
-    private final OrderService orderService = new OrderService();
+    private OrderService orderService;
+    private OrderRepository orderRepository;
+
+    @BeforeEach
+    public void setUp() {
+        orderRepository = mock(OrderRepository.class);
+        orderService = new OrderService(orderRepository);
+    }
 
     @Test
     void givenCreateOrderRequest_WhenCreateOrder_ExpectOrder() {
@@ -20,9 +34,46 @@ class OrderServiceTest {
         Order order = orderService.createOrder(apples, oranges);
 
         // Assert
+        verify(orderRepository, times(1)).saveOrder(order);
+        assertDoesNotThrow(() -> UUID.fromString(order.getId())); // check if id is a valid UUID
         assertEquals(apples, order.getApples());
         assertEquals(oranges, order.getOranges());
         assertEquals(cost, order.getCost());
+    }
+
+    @Test
+    void whenGetAllOrders_ExpectAllOrders() {
+        // Arrange
+        Order order1 = Order.builder()
+                .id(UUID.randomUUID().toString())
+                .build();
+        Order order2 = Order.builder()
+                .id(UUID.randomUUID().toString())
+                .build();
+        when(orderRepository.getAllOrders()).thenReturn(List.of(order1, order2));
+
+        // Act
+        List<Order> orders = orderService.getAllOrders();
+
+        // Assert
+        assertEquals(2, orders.size());
+        assertEquals(order1, orders.get(0));
+        assertEquals(order2, orders.get(1));
+    }
+
+    @Test
+    void givenOrder_WhenGetOrderById_ExpectOrder() {
+        // Arrange
+        Order expectedOrder = Order.builder()
+                .id(UUID.randomUUID().toString())
+                .build();
+        when(orderRepository.getOrder(expectedOrder.getId())).thenReturn(expectedOrder);
+
+        // Act
+        Order actualOrder = orderService.getOrderById(expectedOrder.getId());
+
+        // Assert
+        assertEquals(expectedOrder, actualOrder);
     }
 
     @Test

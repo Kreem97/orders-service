@@ -8,6 +8,7 @@ import lombok.Setter;
 @Setter
 @Builder
 public class OrderResponse {
+    private String id;
     private int apples;
     private int oranges;
     private double cost;
